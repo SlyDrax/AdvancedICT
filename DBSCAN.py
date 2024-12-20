@@ -7,7 +7,6 @@ from scipy.spatial import KDTree
 input_directory = "dataset"
 classified_directory = "classified"
 
-# Ensure the output directories exist
 os.makedirs(classified_directory, exist_ok=True)
 
 def compute_features(points):
@@ -18,7 +17,6 @@ def compute_features(points):
     tree = KDTree(points[:, :3])
     density = np.array([len(tree.query_ball_point(pt, r=1.0)) for pt in points[:, :3]])
 
-    # Curvature using eigenvalues of the covariance matrix
     curvatures = []
     epsilon = 1e-6  
     for pt in points[:, :3]:
@@ -33,10 +31,8 @@ def compute_features(points):
 
     curvatures = np.array(curvatures)
 
-    # Combine features
     features = np.column_stack((x, y, z, height_normalized, density, curvatures))
 
-    # Remove rows with NaN values
     features = features[~np.isnan(features).any(axis=1)]
 
     return features
@@ -50,7 +46,6 @@ def remap_labels(labels):
     remapped_labels = np.zeros_like(labels, dtype=np.uint32)
     noise_value = 255
 
-    # Reserve noise point at every multiple of 256
     max_label = labels.max()
     for original_label in range(-1, max_label + 1):
         if original_label == -1:  # Noise
@@ -69,7 +64,6 @@ for file_name in os.listdir(input_directory):
 
         features = compute_features(points)
 
-        # If features are empty after removing invalid rows, skip the file
         if features.size == 0:
             print(f"Skipping file {file_name}: No valid features after NaN removal.")
             continue
