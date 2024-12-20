@@ -3,6 +3,32 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+class BlockDataset(Dataset):
+    def __init__(self, blocks, labels, num_points=2048):
+        # blocks: list of [N, 3 or 4] arrays, each already normalized
+        self.blocks = blocks
+        self.labels = labels  # matching labels for each block
+        self.num_points = num_points  # how many points to sample per block
+
+    def __len__(self):
+        return len(self.blocks)
+
+    def __getitem__(self, idx):
+        block_points = self.blocks[idx]  # shape [N, 3 or 4]
+        block_labels = self.labels[idx]  # [N]
+
+        # random sample if needed
+        if block_points.shape[0] > self.num_points:
+            idxs = np.random.choice(block_points.shape[0], self.num_points, replace=False)
+            block_points = block_points[idxs]
+            block_labels = block_labels[idxs]
+
+        # Convert to torch tensors
+        block_points = torch.from_numpy(block_points).float()  # [num_points, 3 or 4]
+        block_labels = torch.from_numpy(block_labels).long()
+        return block_points, block_labels
+
+
 class LidarDataset(Dataset):
     """
     A PyTorch Dataset for loading preprocessed LiDAR data (.npz) for segmentation.
